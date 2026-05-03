@@ -512,12 +512,33 @@ if __name__ == '__main__':
     
     runner = web.AppRunner(app)
     import asyncio
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(runner.setup())
+    # Render uchun veb-server funksiyasi
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+app = web.Application()
+app.router.add_get("/", handle)
+
+async def main():
+    # Render portini eshitish
+    port = int(os.environ.get("PORT", 10000))
+    runner = web.AppRunner(app)
+    await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', port)
-    loop.run_until_complete(site.start())
+    await site.start()
     
-    print("Bot ishga tushdi...")
-    # DIQQAT: O'chirib tashlagan kodingiz ichidagi botni ishga tushiruvchi 
-    # oxirgi qatorni aynan shu yerga yozasiz. Masalan:
-    dp.run_polling(bot)
+    print("Veb-server muvaffaqiyatli ishga tushdi.")
+    
+    # Botingizni ishga tushirish qismi
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
+
+if __name__ == '__main__':
+    import asyncio
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("Bot to'xtatildi!")
+    
