@@ -636,7 +636,7 @@ async def main():
     print(" Bot muvaffaqiyatli ishga tushdi!")
     print("---------------------------------------")
     await dp.start_polling(bot)
-@dp.message_handler(commands=['game'])
+@dp.message(commands=['game'])
 async def start_game(message: types.Message):
     await message.answer("O'yin boshlandi! Avval men tashlayman...")
     
@@ -650,7 +650,7 @@ async def start_game(message: types.Message):
 if __name__ == "__main__":
     asyncio.run(main())
 
-@dp.message_handler(content_types=types.ContentType.DICE)
+@dp.message(content_types=types.ContentType.DICE)
 async def check_dice(message: types.Message):
     user_score = message.dice.value
     await message.answer(f"Sizga {user_score} tushdi!")
