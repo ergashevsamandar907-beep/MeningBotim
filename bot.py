@@ -2,12 +2,10 @@ import asyncio
 import sqlite3
 import random
 from PIL import Image, ImageDraw, ImageFont
-from PIL import Image, ImageDraw, ImageFont
 import io
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-
 # ====================== SOZLAMALAR ======================
 API_TOKEN = "8718770348:AAGKn5Sk1E8P-JNMzOf8q5JnPEmRvaAZy0M"
 ADMIN_ID = 8663125946
@@ -58,13 +56,14 @@ def baza_yarat():
                 til TEXT DEFAULT 'uz'
             )
         """)
-        conn.commit()
     cursor.execute("""
-            CREATE TABLE IF NOT EXISTS reklamalar (
+            CREATE TABLE IF NOT EXISTS reklamalar ( 
                 user_id INTEGER,
                 message_id INTEGER
             )
         """)
+    conn.commit()
+    
 def foydalanuvchi_qosh(user_id, referrer_id=None):
     with sqlite3.connect("bot_bazasi.db") as conn:
         cursor = conn.cursor()
@@ -566,7 +565,17 @@ async def check_subscription(callback: types.CallbackQuery):
 
 
 # ====================== ASOSIY XABARLAR ======================
-
+@dp.message(Command("game"))
+async def start_game(message: types.Message):
+    await message.answer("O'yin boshlandi! Avval men tashlayman...")
+    
+    # Bot kubik tashlaydi
+    bot_data = await message.answer_dice(emoji="🎲")
+    bot_score = bot_data.dice.value
+    
+    await asyncio.sleep(3.5) # Hayajonli kutish
+    
+    await message.answer(f"Menga {bot_score} tushdi! Endi sizning navbatingiz, marhamat 🎲 emojisini yuboring.")
 @dp.message()
 async def bot_messages(message: types.Message):
     user_id = message.from_user.id
@@ -574,6 +583,8 @@ async def bot_messages(message: types.Message):
 
     if not await aza_bolganmi(user_id):
         await message.answer(MATNLAR[til]["sub_text"], reply_markup=aazolik_klaviaturasi(til))
+        return
+    if not message.text:
         return
 
     text = message.text.strip()
@@ -615,14 +626,8 @@ async def bot_messages(message: types.Message):
         # Kirill va lotin o'zgarishlaridagi maxsus belgilarni tozalaymiz
         ism_clean = text.lower().replace("’", "").replace("`", "").replace("'", "").replace("‘", "").replace("o‘", "o").replace("g‘", "g")
         if ism_clean in ISMLAR_MANOSI:
-            # 1. Rasmni yasash
-            photo_bytes = rasm_yasa(text)
-            # 2. Rasmni yuborish
-            await message.answer_photo(
-                photo=types.BufferedInputFile(photo_bytes.read(), filename="ism.png"),
-                caption=f"📌 <b>{text.capitalize()}</b>\n\n{ISMLAR_MANOSI[ism_clean]}"
-            )
-            return  # Bu yerda ism topilsa bot to'xtaydi
+            await message.answer(f"✨ <b>{text.capitalize()}</b>\n\n{ISMLAR_MANOSI[ism_clean]}")
+            return
 
         # Agar ism topilmasa, pastdagi kod ishlaydi
         await message.answer(MATNLAR[til]["not_found"] + "\n\n" + MATNLAR[til]["taklif_yuborildi"])
@@ -636,21 +641,7 @@ async def main():
     print(" Bot muvaffaqiyatli ishga tushdi!")
     print("---------------------------------------")
     await dp.start_polling(bot)
-@dp.message(commands=['game'])
-async def start_game(message: types.Message):
-    await message.answer("O'yin boshlandi! Avval men tashlayman...")
-    
-    # Bot kubik tashlaydi
-    bot_data = await message.answer_dice(emoji="🎲")
-    bot_score = bot_data.dice.value
-    
-    await asyncio.sleep(3.5) # Hayajonli kutish
-    
-    await message.answer(f"Menga {bot_score} tushdi! Endi sizning navbatingiz, marhamat 🎲 emojisini yuboring.")
-if __name__ == "__main__":
-    asyncio.run(main())
-
-@dp.message(content_types=types.ContentType.DICE)
+@dp.message(F.dice)
 async def check_dice(message: types.Message):
     user_score = message.dice.value
     await message.answer(f"Sizga {user_score} tushdi!")
@@ -659,3 +650,6 @@ async def check_dice(message: types.Message):
         await message.answer("Yomon emas! 🔥")
     else:
         await message.answer("Keyingi safar albatta omad keladi! 😊")
+
+if __name__ == "__main__":
+    asyncio.run(main())
