@@ -2,10 +2,12 @@ import asyncio
 import sqlite3
 import random
 from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 import io
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+
 # ====================== SOZLAMALAR ======================
 API_TOKEN = "8718770348:AAGKn5Sk1E8P-JNMzOf8q5JnPEmRvaAZy0M"
 ADMIN_ID = 8663125946
@@ -53,17 +55,12 @@ def baza_yarat():
                 id INTEGER PRIMARY KEY,
                 balans INTEGER DEFAULT 0,
                 invited_by INTEGER DEFAULT NULL,
-                til TEXT DEFAULT 'uz'
+                til TEXT DEFAULT 'uz',
+                status TEXT DEFAULT 'idle',
+                partner_id INTEGER DEFAULT NULL
             )
         """)
-    cursor.execute("""
-            CREATE TABLE IF NOT EXISTS reklamalar ( 
-                user_id INTEGER,
-                message_id INTEGER
-            )
-        """)
-    conn.commit()
-    
+        conn.commit()
 def foydalanuvchi_qosh(user_id, referrer_id=None):
     with sqlite3.connect("bot_bazasi.db") as conn:
         cursor = conn.cursor()
@@ -80,7 +77,25 @@ def foydalanuvchi_qosh(user_id, referrer_id=None):
                 conn.commit()
         except sqlite3.IntegrityError:
             pass
+def holatni_yangila(user_id, status, partner_id=None):
+    with sqlite3.connect("bot_bazasi.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE foydalanuvchilar SET status = ?, partner_id = ? WHERE id = ?", (status, partner_id, user_id))
+        conn.commit()
 
+def foydalanuvchi_holatini_ol(user_id):
+    with sqlite3.connect("bot_bazasi.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT status, partner_id FROM foydalanuvchilar WHERE id = ?", (user_id,))
+        res = cursor.fetchone()
+        return res if res else ("idle", None)
+
+def suhbatdosh_top(user_id):
+    with sqlite3.connect("bot_bazasi.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM foydalanuvchilar WHERE status = 'searching' AND id != ?", (user_id,))
+        res = cursor.fetchone()
+        return res[0] if res else None
 def foydalanuvchi_tilini_yangila(user_id, til):
     with sqlite3.connect("bot_bazasi.db") as conn:
         cursor = conn.cursor()
@@ -133,6 +148,9 @@ MATNLAR = {
         "btn_ishlash": "🧠 Bot qanday ishlaydi",
         "btn_profil": "👤 Profilim",
         "btn_til": "🌐 Tilni almashtirish",
+        "btn_taklif": "✍️ Ism taklif qilish",
+        "btn_chat": "💬 Anonim Suhbat 🗣",
+        "btn_stop": "❌ Suhbatni yakunlash",
         "sub_text": "Botdan foydalanishdan oldin homiy kanalimizga a'zo bo'lishingiz kerak:",
         "sub_btn": "📢 Kanalga a'zo bo'lish",
         "sub_check": "✅ Tasdiqlash",
@@ -145,9 +163,12 @@ MATNLAR = {
         "not_found": "Kechirasiz, bu ism ma'nosi hali bazamizga qo'shilmagan.",
         "change_lang": "Iltimos, tilni tanlang:",
         "lang_changed": "Til muvaffaqiyatli o'zgartirildi! 🇺🇿",
-        "btn_taklif": "✍️ Ism taklif qilish",
         "taklif_text": "Bazada yo'q ismni yozib yuboring, biz uni ko'rib chiqamiz!",
-        "taklif_yuborildi": "Rahmat! Taklifingiz adminga yuborildi."
+        "taklif_yuborildi": "Rahmat! Taklifingiz adminga yuborildi.",
+        "chat_search": "🔍 Suhbatdosh qidirilmoqda... Iltimos, kuting.",
+        "chat_found": "🎉 Suhbatdosh topildi! Suhbatni boshlashingiz mumkin.\nTugatish uchun pastdagi tugmani bosing.",
+        "chat_stopped": "❌ Suhbat yakunlandi.",
+        "chat_partner_stopped": "Suhbatdosh muloqotni yakunladi. ❌"
     },
     "ru": {
         "start": "Здравствуйте! Введите имя или используйте меню.",
@@ -158,6 +179,9 @@ MATNLAR = {
         "btn_ishlash": "🧠 Как работает бот",
         "btn_profil": "👤 Мой профиль",
         "btn_til": "🌐 Сменить язык",
+        "btn_taklif": "✍️ Предложить имя",
+        "btn_chat": "💬 Анонимный чат 🗣",
+        "btn_stop": "❌ Завершить чат",
         "sub_text": "Перед использованием бота необходимо подписаться на спонсорский канал:",
         "sub_btn": "📢 Подписаться на канал",
         "sub_check": "✅ Проверить",
@@ -170,9 +194,12 @@ MATNLAR = {
         "not_found": "Извините, значение этого имени еще не добавлено в базу.",
         "change_lang": "Пожалуйста, выберите язык:",
         "lang_changed": "Язык успешно изменен! 🇷🇺",
-        "btn_taklif": "✍️ Предложить имя",
         "taklif_text": "Отправьте имя, которого нет в базе, и мы его рассмотрим!",
-        "taklif_yuborildi": "Спасибо! Ваше предложение отправлено админу."
+        "taklif_yuborildi": "Спасибо! Ваше предложение отправлено админу.",
+        "chat_search": "🔍 Поиск собеседника... Пожалуйста, подождите.",
+        "chat_found": "🎉 Собеседник найден! Можете начать общение.\nДля завершения нажмите кнопку ниже.",
+        "chat_stopped": "❌ Чат завершен.",
+        "chat_partner_stopped": "Собеседник завершил общение. ❌"
     },
     "en": {
         "start": "Hello! Enter a name or use the menu.",
@@ -183,6 +210,9 @@ MATNLAR = {
         "btn_ishlash": "🧠 How the bot works",
         "btn_profil": "👤 My Profile",
         "btn_til": "🌐 Change Language",
+        "btn_taklif": "✍️ Suggest a name",
+        "btn_chat": "💬 Anonymous Chat 🗣",
+        "btn_stop": "❌ Stop Chat",
         "sub_text": "Before using the bot, you must subscribe to our sponsor channel:",
         "sub_btn": "📢 Subscribe to the channel",
         "sub_check": "✅ Verify",
@@ -191,16 +221,19 @@ MATNLAR = {
         "ref_bonus": "🎉 You invited a new friend! You earned {bonus} sum.",
         "stat_text": "📊 Total subscribers: {soni}.",
         "work_text": "Use buttons or send a name.",
-        "profile_text": "👤 Your profile:\n🆔 ID: <code>{user_id}</code>\n💰 Balance: {balans} sum",
+        "profile_text": "👤 Your profile:\n🆔 ID: <code>{user_id}</code>\n💰 Balance: {sum} sum",
         "not_found": "Sorry, the meaning of this name is not added yet.",
         "change_lang": "Please select a language:",
         "lang_changed": "Language changed successfully! 🇬🇧",
-        "btn_taklif": "✍️ Suggest a name",
         "taklif_text": "Send a name that is not in the database, and we will consider it!",
-        "taklif_yuborildi": "Thank you! Your suggestion has been sent to the admin."
+        "taklif_yuborildi": "Thank you! Your suggestion has been sent to the admin.",
+        "chat_search": "🔍 Searching for a partner... Please wait.",
+        "chat_found": "🎉 Partner found! You can start chatting.\nTo stop, press the button below.",
+        "chat_stopped": "❌ Chat stopped.",
+        "chat_partner_stopped": "The partner has stopped the chat. ❌"
     }
 }
-
+ 
 # ====================== KLAVIATURALAR ======================
 def menyu_klaviaturasi(til):
     return ReplyKeyboardMarkup(
@@ -208,11 +241,16 @@ def menyu_klaviaturasi(til):
             [KeyboardButton(text=MATNLAR[til]["btn_ismlar"]), KeyboardButton(text=MATNLAR[til]["btn_tasodif"])],
             [KeyboardButton(text=MATNLAR[til]["btn_hamkor"]), KeyboardButton(text=MATNLAR[til]["btn_stat"])],
             [KeyboardButton(text=MATNLAR[til]["btn_ishlash"]), KeyboardButton(text=MATNLAR[til]["btn_profil"])],
-            [KeyboardButton(text=MATNLAR[til]["btn_taklif"]), KeyboardButton(text=MATNLAR[til]["btn_til"])]
+            [KeyboardButton(text=MATNLAR[til]["btn_taklif"]), KeyboardButton(text=MATNLAR[til]["btn_til"])],
+            [KeyboardButton(text=MATNLAR[til]["btn_chat"])]
         ],
         resize_keyboard=True
     )
-
+def suhbat_klaviaturasi(til):
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=MATNLAR[til]["btn_stop"])]],
+        resize_keyboard=True
+    )
 def til_tanlash_klaviaturasi():
     return InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="setlang_uz"),
@@ -460,86 +498,29 @@ async def start_command(message: types.Message):
         return
 
     await message.answer(MATNLAR[til]["start"], reply_markup=menyu_klaviaturasi(til))
-# ====================== REKLAMA BOSHQARUVI ======================
-
 @dp.message(Command("forward"))
 async def forward_reklama(message: types.Message):
     if message.from_user.id != ADMIN_ID:
         return
 
+    # Agar xabarga reply (javob) berilgan bo'lsa
     if message.reply_to_message:
-        # Avvalgi reklama ID-larini tozalaymiz
-        with sqlite3.connect("bot_bazasi.db") as conn:
-            conn.execute("DELETE FROM reklamalar")
-
-        users = foydalanuvchilarni_ol()
         sent_count = 0
+        # Diqqat: Bu yerda foydalanuvchilar bazasini olish funksiyasi nomini tekshiring
+        users = foydalanuvchilarni_ol() 
         
         for user in users:
             try:
-                # Xabarni nusxalab yuboramiz (.copy_to "forwarded from"ni o'chiradi)
-                sent_msg = await message.reply_to_message.copy_to(user[0])
-                
-                # ID raqamlarini bazaga yozib qo'yamiz
-                with sqlite3.connect("bot_bazasi.db") as conn:
-                    conn.execute("INSERT INTO reklamalar (user_id, message_id) VALUES (?, ?)", 
-                                 (user[0], sent_msg.message_id))
+                # Xabarni nusxalab yuborish
+                await message.reply_to_message.copy_to(user[0])
                 sent_count += 1
             except:
                 continue
         
-        await message.answer(f"✅ Reklama {sent_count} kishiga yuborildi!\n\n"
-                             f"🗑 O'chirish: /delete_reklama\n"
-                             f"📝 Tahrirlash: /edit_reklama [yangi matn]")
+        await message.answer(f"✅ Reklama {sent_count} ta foydalanuvchiga yuborildi!")
     else:
-        await message.answer("Xabarga 'Reply' qilib /forward deb yozing!")
+        await message.answer("Xabarni tarqatish uchun o'sha xabarga 'Reply' qiling!")
 
-@dp.message(Command("delete_reklama"))
-async def delete_reklama_all(message: types.Message):
-    if message.from_user.id != ADMIN_ID:
-        return
-
-    with sqlite3.connect("bot_bazasi.db") as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT user_id, message_id FROM reklamalar")
-        all_messages = cursor.fetchall()
-
-    deleted = 0
-    for u_id, m_id in all_messages:
-        try:
-            await bot.delete_message(chat_id=u_id, message_id=m_id)
-            deleted += 1
-        except:
-            continue
-
-    await message.answer(f"🗑 {deleted} ta xabar hamma foydalanuvchilardan o'chirildi!")
-
-@dp.message(Command("edit_reklama"))
-async def edit_reklama_all(message: types.Message):
-    if message.from_user.id != ADMIN_ID:
-        return
-    
-    # Komandadan keyingi matnni ajratib olamiz
-    new_text = message.text.replace("/edit_reklama", "").strip()
-    
-    if not new_text:
-        await message.answer("Xatolik! Yangi matnni yozing.\nMasalan: /edit_reklama Bugun aksiya!")
-        return
-
-    with sqlite3.connect("bot_bazasi.db") as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT user_id, message_id FROM reklamalar")
-        all_messages = cursor.fetchall()
-
-    edited = 0
-    for u_id, m_id in all_messages:
-        try:
-            await bot.edit_message_text(chat_id=u_id, message_id=m_id, text=new_text)
-            edited += 1
-        except:
-            continue
-
-    await message.answer(f"📝 {edited} ta xabar tahrirlandi!")
 # ====================== CALLBACKLAR ======================
 @dp.callback_query(lambda c: c.data.startswith("setlang_"))
 async def change_language_callback(callback: types.CallbackQuery):
@@ -565,31 +546,49 @@ async def check_subscription(callback: types.CallbackQuery):
 
 
 # ====================== ASOSIY XABARLAR ======================
-@dp.message(Command("game"))
-async def start_game(message: types.Message):
-    await message.answer("O'yin boshlandi! Avval men tashlayman...")
-    
-    # Bot kubik tashlaydi
-    bot_data = await message.answer_dice(emoji="🎲")
-    bot_score = bot_data.dice.value
-    
-    await asyncio.sleep(3.5) # Hayajonli kutish
-    
-    await message.answer(f"Menga {bot_score} tushdi! Endi sizning navbatingiz, marhamat 🎲 emojisini yuboring.")
+
 @dp.message()
 async def bot_messages(message: types.Message):
     user_id = message.from_user.id
     til = foydalanuvchi_tilini_ol(user_id)
+    status, partner_id = foydalanuvchi_holatini_ol(user_id)
 
+    # Agar foydalanuvchi kanallarga a'zo bo'lmagan bo'lsa
     if not await aza_bolganmi(user_id):
         await message.answer(MATNLAR[til]["sub_text"], reply_markup=aazolik_klaviaturasi(til))
         return
-    if not message.text:
+
+    text = message.text.strip() if message.text else ""
+
+    # === ANONIM CHAT TO'XTATISH TUGMASI ===
+    if text == MATNLAR[til]["btn_stop"]:
+        if status == "chatting" and partner_id:
+            partner_til = foydalanuvchi_tilini_ol(partner_id)
+            await bot.send_message(partner_id, MATNLAR[partner_til]["chat_partner_stopped"], reply_markup=menyu_klaviaturasi(partner_til))
+            holatni_yangila(partner_id, "idle", None)
+        
+        holatni_yangila(user_id, "idle", None)
+        await message.answer(MATNLAR[til]["chat_stopped"], reply_markup=menyu_klaviaturasi(til))
         return
 
-    text = message.text.strip()
+    # === CHAT JARAYONIDA BO'LSA (Xabar yo'llash) ===
+    if status == "chatting" and partner_id:
+        try:
+            # Xabarni sherigiga xuddi o'ziday qilib nusxalab yuboramiz (matn, rasm, stiker va b.)
+            await message.copy_to(chat_id=partner_id)
+        except Exception:
+            # Agar xabar yetib bormasa (masalan, bloklagan bo'lsa), chatni yopamiz
+            await message.answer("Suhbatdosh bilan aloqa uzildi. ❌", reply_markup=menyu_klaviaturasi(til))
+            holatni_yangila(user_id, "idle", None)
+            holatni_yangila(partner_id, "idle", None)
+        return
 
-    # Tugmalar tekshirish
+    # === CHATING QIDIRUV REJIMIDA BO'LSA (Hech narsa yozib bo'lmaydi) ===
+    if status == "searching":
+        await message.answer(MATNLAR[til]["chat_search"])
+        return
+
+    # === MENYU TUGMALARI ===
     if text == MATNLAR[til]["btn_ismlar"]:
         ismlar = ", ".join([k.capitalize() for k in ISMLAR_MANOSI.keys()])
         await message.answer(f"📚 Bazadagi ismlar:\n\n{ismlar}")
@@ -618,38 +617,50 @@ async def bot_messages(message: types.Message):
 
     elif text == MATNLAR[til]["btn_til"]:
         await message.answer(MATNLAR[til]["change_lang"], reply_markup=til_tanlash_klaviaturasi())
+
     elif text == MATNLAR[til]["btn_taklif"]:
         await message.answer(MATNLAR[til]["taklif_text"])
-        return
-    # Ism qidirish
-    else:
-        # Kirill va lotin o'zgarishlaridagi maxsus belgilarni tozalaymiz
+
+    # === ANONIM CHAT BOSHLASH TUGMASI ===
+    elif text == MATNLAR[til]["btn_chat"]:
+        s_id = suhbatdosh_top(user_id)
+        if s_id:
+            # Suhbatdosh topildi! Ikkala tomonni bog'laymiz
+            holatni_yangila(user_id, "chatting", s_id)
+            holatni_yangila(s_id, "chatting", user_id)
+            
+            s_til = foydalanuvchi_tilini_ol(s_id)
+            
+            await message.answer(MATNLAR[til]["chat_found"], reply_markup=suhbat_klaviaturasi(til))
+            await bot.send_message(s_id, MATNLAR[s_til]["chat_found"], reply_markup=suhbat_klaviaturasi(s_til))
+        else:
+            # Hech kim yo'q, navbatga qo'yamiz
+            holatni_yangila(user_id, "searching", None)
+            await message.answer(MATNLAR[til]["chat_search"], reply_markup=suhbat_klaviaturasi(til))
+
+    # === ISM QIDIRISH ===
+    elif text:
         ism_clean = text.lower().replace("’", "").replace("`", "").replace("'", "").replace("‘", "").replace("o‘", "o").replace("g‘", "g")
         if ism_clean in ISMLAR_MANOSI:
-            await message.answer(f"✨ <b>{text.capitalize()}</b>\n\n{ISMLAR_MANOSI[ism_clean]}")
+            photo_bytes = rasm_yasa(text)
+            await message.answer_photo(
+                photo=types.BufferedInputFile(photo_bytes.read(), filename="ism.png"),
+                caption=f"📌 <b>{text.capitalize()}</b>\n\n{ISMLAR_MANOSI[ism_clean]}"
+            )
             return
 
-        # Agar ism topilmasa, pastdagi kod ishlaydi
         await message.answer(MATNLAR[til]["not_found"] + "\n\n" + MATNLAR[til]["taklif_yuborildi"])
         try:
             await bot.send_message(ADMIN_ID, f"🆕 Yangi ism taklifi:\n👤 Kimdan: {message.from_user.full_name}\n🆔 ID: {user_id}\n✍️ Ism: {text}")
         except:
-            pass 
+            pass
+
 # ====================== BOTNI ISHGA TUSHIRISH ======================
 async def main():
     print("---------------------------------------")
     print(" Bot muvaffaqiyatli ishga tushdi!")
     print("---------------------------------------")
     await dp.start_polling(bot)
-@dp.message(F.dice)
-async def check_dice(message: types.Message):
-    user_score = message.dice.value
-    await message.answer(f"Sizga {user_score} tushdi!")
-    
-    if user_score > 3:
-        await message.answer("Yomon emas! 🔥")
-    else:
-        await message.answer("Keyingi safar albatta omad keladi! 😊")
 
 if __name__ == "__main__":
     asyncio.run(main())
