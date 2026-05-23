@@ -9,7 +9,7 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 # ====================== SOZLAMALAR ======================
-API_TOKEN = "8718770348:AAGKn5Sk1E8P-JNMzOf8q5JnPEmRvaAZy0M"
+API_TOKEN = "8718770348:AAFx-3GyNBEGv5gnAnEyOXKh7vYjiPali8U"
 ADMIN_ID = 8663125946
 KANAL_USERNAME = "@mayahumayahi"
 
