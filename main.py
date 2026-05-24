@@ -2,8 +2,8 @@ import asyncio
 import sqlite3
 import random
 import os
-import io
 from PIL import Image, ImageDraw, ImageFont
+import io
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
@@ -24,7 +24,9 @@ REFERRAL_BONUS = 100
 bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher()
 
-# --- RASM GENERATORI ---
+# ====================== VAQTINCHALIK HOLAT ======================
+kutish_holati = {}  # {user_id: "taklif"}
+
 def rasm_yasa(ism):
     W, H = (800, 450)
     image = Image.new("RGB", (W, H), color=(20, 40, 80))
@@ -42,7 +44,6 @@ def rasm_yasa(ism):
     img_byte_arr.seek(0)
     return img_byte_arr
 
-# --- MA'LUMOTLAR BAZASI BILAN ISHLASH ---
 def baza_yarat():
     with sqlite3.connect("bot_bazasi.db") as conn:
         cursor = conn.cursor()
@@ -116,7 +117,12 @@ def foydalanuvchi_balansi(user_id):
         res = cursor.fetchone()
         return res[0] if res else 0
 
-# --- YOUTUBE MUSIQA QIDIRISH ---
+def barcha_foydalanuvchilarni_ol():
+    with sqlite3.connect("bot_bazasi.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM foydalanuvchilar")
+        return cursor.fetchall()
+
 async def youtube_musiqa_qidir(soz):
     try:
         ydl_opts = {'quiet': True, 'no_warnings': True, 'extract_flat': True}
@@ -126,12 +132,11 @@ async def youtube_musiqa_qidir(soz):
             if info and 'entries' in info:
                 for entry in info['entries']:
                     if entry:
-                        natijalar.append({'nomi': entry.get('title', "Noma'lum"), 'link': f"https://youtube.com/watch?v={entry['id']}"})
+                        natijalar.append({'nomi': entry.get('title', 'Noma\'lum'), 'link': f"https://youtube.com/watch?v={entry['id']}"})
             return natijalar
     except:
         return []
 
-# --- HOMIY KANALGA A'ZOLIKNI TEKSHIRISH ---
 async def azo_bolganmi(user_id: int) -> bool:
     try:
         member = await bot.get_chat_member(chat_id=KANAL_USERNAME, user_id=user_id)
@@ -141,293 +146,111 @@ async def azo_bolganmi(user_id: int) -> bool:
 
 baza_yarat()
 
-# --- MATNLAR VA TUGMALAR (Probelsiz variantda skrinshotga moslandi) ---
 MATNLAR = {
     "uz": {
-        "start": "Assalomu alaykum! Ism kiriting yoki menyudan foydalaning.",
-        "btn_ismlar": "🔍Ismlar",
-        "btn_tasodif": "🎲Tasodifiy",
-        "btn_hamkor": "🤝Hamkorlik",
-        "btn_stat": "📊Statistika",
-        "btn_ishlash": "🧠Bot haqida",
-        "btn_profil": "👤Profil",
-        "btn_til": "🌐Til",
-        "btn_taklif": "✍️Taklif",
-        "btn_chat": "💬Anonim",
-        "btn_stop": "❌Suhbatni yakunlash",
-        "btn_musiqa": "🎵Musiqa",
-        "sub_text": "Botdan foydalanishdan oldin homiy kanalimizga a'zo bo'lishingiz kerak:",
-        "sub_btn": "📢 Kanalga a'zo bo'lish",
-        "sub_check": "✅ Tasdiqlash",
-        "sub_error": "Siz hali kanalga a'zo bo'lmadingiz!",
-        "sub_success": "Rahmat! Endi botdan to'liq foydalanishingiz mumkin.",
-        "ref_bonus": f"🎉 Yangi do'st taklif qildingiz! Sizga {REFERRAL_BONUS} so'm berildi.",
-        "stat_text": "📊 Jami obunachilar: {soni} ta.",
-        "work_text": "Tugmalardan foydalaning, ism yozib ma'nosini biling yoki musiqa qidiring.",
-        "profile_text": "👤 Profilingiz:\n🆔 ID: <code>{user_id}</code>\n💰 Balans: {balans} so'm",
-        "not_found": "Kechirasiz, bu ism ma'nosi hali bazamizga qo'shilmagan. Lekin siz uchun maxsus rasm tayyorladik!",
-        "change_lang": "Iltimos, tilni tanlang:",
-        "lang_changed": "Til muvaffaqiyatli o'zgartirildi!",
-        "taklif_text": "Bazada yo'q ismni yozib yuboring, biz uni ko'rib chiqamiz!",
-        "taklif_yuborildi": "Rahmat! Taklifingiz adminga yuborildi.",
-        "chat_search": "🔍 Suhbatdosh qidirilmoqda... Iltimos, kuting.",
-        "chat_found": "🎉 Suhbatdosh topildi! Suhbatni boshlashingiz mumkin.\nTugatish uchun pastdagi tugmani bosing.",
-        "chat_stopped": "❌ Suhbat yakunlandi.",
-        "chat_partner_stopped": "Suhbatdosh muloqotni yakunladi.",
+        "start": "Assalomu alaykum! Botga xush kelibsiz!",
+        "btn_ismlar": "🔍 Ismlar",
+        "btn_tasodif": "🎲 Tasodifiy",
+        "btn_hamkor": "🤝 Hamkorlik",
+        "btn_stat": "📊 Statistika",
+        "btn_ishlash": "🧠 Bot haqida",
+        "btn_profil": "👤 Profil",
+        "btn_til": "🌐 Til",
+        "btn_taklif": "✍️ Ism taklif qilish",
+        "btn_chat": "💬 Suhbat",
+        "btn_stop": "❌ To'xtat",
+        "btn_musiqa": "🎵 Musiqa",
+        "sub_text": "Kanalga a'zo bo'ling!",
+        "sub_btn": "A'zo bo'lish",
+        "sub_check": "Tekshirish",
+        "sub_error": "A'zo emassiz!",
+        "sub_success": "Rahmat!",
+        "ref_bonus": f"🎉 +{REFERRAL_BONUS} so'm!",
+        "stat_text": "📊 {soni} ta",
+        "work_text": "Ism yozing",
+        "profile_text": "ID: {user_id}\nBalans: {balans}",
+        "not_found": "Kechirasiz, bu ism ma'nosi bazamizda yo'q",
+        "change_lang": "Til tanlang",
+        "lang_changed": "O'zgartirildi",
+        "taklif_text": "✍️ Iltimos, bazaga qo'shilishini hohlagan ismni yozing:",
+        "taklif_yuborildi": "✅ Rahmat! Taklifingiz adminga yuborildi.",
+        "chat_search": "🔍 Suhbatdosh qidirilmoqda...",
+        "chat_found": "🎉 Suhbatdosh topildi!",
+        "chat_stopped": "❌ Suhbat yakunlandi",
+        "chat_partner_stopped": "Suhbatdosh chiqib ketdi",
         "musiqa_text": "🎵 Qo'shiq nomini yozing:",
-        "musiqa_topilmadi": "❌ Hech qanday musiqa topilmadi!"
+        "musiqa_topilmadi": "❌ Hech narsa topilmadi"
     },
     "ru": {
-        "start": "Здравствуйте! Введите имя или используйте меню.",
-        "btn_ismlar": "🔍Имена",
-        "btn_tasodif": "🎲Случайное",
-        "btn_hamkor": "🤝Партнерство",
-        "btn_stat": "📊Статистика",
-        "btn_ishlash": "🧠О боте",
-        "btn_profil": "👤Профиль",
-        "btn_til": "🌐Язык",
-        "btn_taklif": "✍️Предложение",
-        "btn_chat": "💬Анонимно",
-        "btn_stop": "❌Завершить чат",
-        "btn_musiqa": "🎵Музыка",
-        "sub_text": "Перед использованием бота необходимо подписаться на спонсорский канал:",
-        "sub_btn": "📢 Подписаться на канал",
-        "sub_check": "✅ Проверить",
-        "sub_error": "Вы еще не подписались на канал!",
-        "sub_success": "Спасибо! Теперь вы можете полноценно использовать бота.",
-        "ref_bonus": f"🎉 Вы пригласили нового друга! Вам начислено {REFERRAL_BONUS} сум.",
-        "stat_text": "📊 Всего подписчиков: {soni}.",
-        "work_text": "Используйте кнопки, отправьте имя для значения или ищите музыку.",
-        "profile_text": "👤 Ваш профиль:\n🆔 ID: <code>{user_id}</code>\n💰  Баланс: {balans} сум",
-        "not_found": "Извините, этого имени нет в базе. Но мы сделали для вас картинку!",
-        "change_lang": "Пожалуйста, выберите язык:",
-        "lang_changed": "Язык успешно изменен!",
-        "taklif_text": "Отправьте имя, которого нет в базе, и мы его рассмотрим!",
-        "taklif_yuborildi": "Спасибо! Ваше предложение отправлено админу.",
-        "chat_search": "🔍 Поиск собеседника... Пожалуйста, подождите.",
-        "chat_found": "🎉 Собеседник найден! Можете начать общение.\nДля завершения нажмите кнопку ниже.",
-        "chat_stopped": "❌ Чат завершен.",
-        "chat_partner_stopped": "Собеседник завершил общение.",
+        "start": "Здравствуйте! Добро пожаловать!",
+        "btn_ismlar": "🔍 Имена",
+        "btn_tasodif": "🎲 Случайное",
+        "btn_hamkor": "🤝 Партнеры",
+        "btn_stat": "📊 Статистика",
+        "btn_ishlash": "🧠 О боте",
+        "btn_profil": "👤 Профиль",
+        "btn_til": "🌐 Язык",
+        "btn_taklif": "✍️ Предложить имя",
+        "btn_chat": "💬 Чат",
+        "btn_stop": "❌ Стоп",
+        "btn_musiqa": "🎵 Музыка",
+        "sub_text": "Подпишитесь!",
+        "sub_btn": "Подписаться",
+        "sub_check": "Проверить",
+        "sub_error": "Не подписан!",
+        "sub_success": "Спасибо!",
+        "ref_bonus": f"🎉 +{REFERRAL_BONUS} сум!",
+        "stat_text": "📊 {soni}",
+        "work_text": "Напишите имя",
+        "profile_text": "ID: {user_id}\nБаланс: {balans}",
+        "not_found": "Извините, это имя не найдено",
+        "change_lang": "Выберите язык",
+        "lang_changed": "Изменено",
+        "taklif_text": "✍️ Напишите имя для добавления:",
+        "taklif_yuborildi": "✅ Спасибо! Предложение отправлено",
+        "chat_search": "🔍 Поиск собеседника...",
+        "chat_found": "🎉 Собеседник найден!",
+        "chat_stopped": "❌ Чат завершен",
+        "chat_partner_stopped": "Собеседник вышел",
         "musiqa_text": "🎵 Напишите название песни:",
-        "musiqa_topilmadi": "❌ Ничего не найдено!"
+        "musiqa_topilmadi": "❌ Ничего не найдено"
+    },
+    "en": {
+        "start": "Hello! Welcome!",
+        "btn_ismlar": "🔍 Names",
+        "btn_tasodif": "🎲 Random",
+        "btn_hamkor": "🤝 Referral",
+        "btn_stat": "📊 Stats",
+        "btn_ishlash": "🧠 About",
+        "btn_profil": "👤 Profile",
+        "btn_til": "🌐 Language",
+        "btn_taklif": "✍️ Suggest name",
+        "btn_chat": "💬 Chat",
+        "btn_stop": "❌ Stop",
+        "btn_musiqa": "🎵 Music",
+        "sub_text": "Subscribe!",
+        "sub_btn": "Subscribe",
+        "sub_check": "Check",
+        "sub_error": "Not subscribed!",
+        "sub_success": "Thanks!",
+        "ref_bonus": f"🎉 +{REFERRAL_BONUS} sum!",
+        "stat_text": "📊 {soni}",
+        "work_text": "Send name",
+        "profile_text": "ID: {user_id}\nBalance: {balans}",
+        "not_found": "Sorry, name not found",
+        "change_lang": "Choose language",
+        "lang_changed": "Changed",
+        "taklif_text": "✍️ Send name to add:",
+        "taklif_yuborildi": "✅ Thanks! Suggestion sent",
+        "chat_search": "🔍 Searching...",
+        "chat_found": "🎉 Partner found!",
+        "chat_stopped": "❌ Chat stopped",
+        "chat_partner_stopped": "Partner left",
+        "musiqa_text": "🎵 Enter song name:",
+        "musiqa_topilmadi": "❌ Nothing found"
     }
 }
 
-# --- ISMLAR BAZASI ---
-ISMLAR_MANOSI = {
-   "oybek": "Oybek — oy kabi go'zal, porloq va beklik martabasiga ega bo'lgan yigit.",
-    "behzod": "Behzod — yaxshi fe'l-atvorli, aslzoda va barkamol inson.",
-    "abbos": "Abbos — qovog'i soliq, jiddiy, dovjigar va jasur o'g'il.",
-    "afsona": "Afsona — sehrli hikoya kabi jozibali va sirli qiz.",
-    "abdulaziz": "Abdulaziz — aziz va qudratli bo'lgan Allohning bandasi.",
-    "asal": "Asal — shirin, yoqimli va hamma suyadigan qiz.",
-    "abdulla": "Abdulla — Allohning bandasi, solih va iymonli inson.",
-    "aziza": "Aziza — qadrli, hurmatli va eng aziz qiz.",
-    "abdurahmon": "Abdurahmon — mehribon va rahmli Allohning bandasi.",
-    "bahora": "Bahora — bahor fasli kabi go'zal va yorqin.",
-    "abror": "Abror — yaxshilik qiluvchi, pokiza va taqvodor inson.",
-    "barchinoy": "Barchinoy — oydek go'zal va xalq dostonlaridagi jasur qiz.",
-    "adiz": "Adiz — aziz, qadrli, hurmatga loyiq yigit.",
-    "barno": "Barno — kelbatli, chiroyli va jozibali qiz.",
-    "adham": "Adham — qora ot kabi kuchli, kelbatli va baquvvat.",
-    "charos": "Charos — katta va qora ko'zlari maftunkor bo'lgan qiz.",
-    "akbar": "Akbar — ulug', buyuk va eng katta martabaga ega inson.",
-    "dildora": "Dildora — dilni o'ziga rom etuvchi, sevimli qiz.",
-    "akmal": "Akmal — mukammal, eng yetuk va benuqson yigit.",
-    "dilnoza": "Dilnoza — dili nozik, latofatli va suluv qiz.",
-    "alisher": "Alisher — Ali kabi jasur va sherdek qudratli inson.",
-    "dilrabo": "Dilrabo — go'zalligi bilan ko'ngillarni jalb qiluvchi.",
-    "amir": "Amir — hukmdor, yo'lboshchi va boshliq.",
-    "durdona": "Durdona — dur donasi kabi qimmatbaho va noyob qiz.",
-    "anvar": "Anvar — nurli, yorug' va iqboli baland yigit.",
-    "ezoza": "E'zoza — e'zozga loyiq, hurmatli va qadrli qiz.",
-    "arslon": "Arslon — sher kabi kuchli, jasur va qo'rqmas.",
-    "farangiz": "Farangiz — shuhrat keltiruvchi, yorqin va go'zal.",
-    "asad": "Asad — arslon kabi mard, botir va qudratli o'g'il.",
-    "fazilat": "Fazilat — yaxshi xulqli, odobli va bilimli qiz.",
-    "asadbek": "Asadbek — jasur, mardlar boshlig'i va arslondek qudratli.",
-    "feruza": "Feruza — baxt keltiruvchi qimmatbaho moviy tosh kabi.",
-    "gozal": "Go'zal — nihoyatda go'zal, chiroyli va latofatli.",
-    "gulbahor": "Gulbahor — bahorning ilk va go'zal guli kabi.",
-    "aziz": "Aziz — qadrli, hurmatli va qadri baland inson.",
-    "azizbek": "Azizbek — ulug'vor, aziz va hurmatga loyiq beklardan biri.",
-    "guldona": "Guldona — gullar ichida eng noyob va qadrlisi.",
-    "azamat": "Azamat — qaddi-qomati kelbatli, jasur va botir yigit.",
-    "gulnora": "Gulnora — anor guli kabi yorqin, qizil va jozibali.",
-    "bahodir": "Bahodir — botir, mard, jasur va qo'rqmas jangchi.",
-    "gulnoza": "Gulnoza — nozik, latofatli va gul kabi nafis qiz.",
-    "bahriddin": "Bahriddin — dinning nuri, ziynati va yorug'ligi.",
-    "gulrux": "Gulrux — yuzi gul kabi chiroyli va tiniq qiz.",
-    "baxtiyor": "Baxtiyor — baxtli, omadli va doimo quvnoq yuruvchi.",
-    "gulsenam": "Gulsenam — mening sevimli gulim, go'zalim.",
-    "bekzod": "Bekzod — beklar avlodidan bo'lgan, aslzoda o'g'il.",
-    "gulsanam": "Gulsanam — gullar ichida sanam kabi maftunkor bo'lgan.",
-    "bobur": "Bobur — sher, yo'lboshchi va jasur jangchi.",
-    "gulshoda": "Gulshoda — gullar shodasi kabi go'zal va quvnoq.",
-    "botir": "Botir — mard, qo'rqmas, jasoratli yigit.",
-    "iroda": "Iroda — matonatli, irodali va qat'iyatli qiz.",
-    "diyor": "Diyor — vatan, yurt va do'stona o'lka farzandi.",
-    "kamola": "Kamola — kamolga yetgan, odobli va mukammal qiz.",
-    "dilshod": "Dilshod — dili shod, quvnoq va baxtiyor yigit.",
-    "lobar": "Lobar — xushmuomala, jozibali va yoqimtoy qiz.",
-    "doniyor": "Doniyor — Allohning tuhfasi, bilimli va dono inson.",
-    "laylo": "Laylo — tungi go'zallik, qora ko'zli va maftunkor.",
-    "doston": "Doston — dovrug'i ketgan, mashhur va tillarda doston yigit.",
-    "madina": "Madina — muqaddas shahar nomi, madaniyatli qiz.",
-    "elbek": "Elbek — yurt boshlig'i, elning bek yigiti.",
-    "malika": "Malika — shohona go'zallikka ega, oliynasab qiz.",
-    "elmurod": "Elmurod — elning orzusi, xalq kutilgan o'g'il.",
-    "maftuna": "Maftuna — o'ziga maftun qiluvchi, jozibali.",
-    "elyor": "Elyor — xalq do'sti, el-yurtga yordam beruvchi.",
-    "manzura": "Manzura — maqbul bo'lgan, hamma yoqtiradigan qiz.",
-    "erkin": "Erkin — hurliksevar, mustaqil va erkin inson.",
-    "marjona": "Marjona — dengiz tubidagi qimmatbaho marjon kabi.",
-    "farhod": "Farhod — aqlli, zukko va yengilmas pahlavon.",
-    "mastura": "Mastura — iffatli, pokiza va iboli qiz.",
-    "farrux": "Farrux — chiroyli, go'zal va iqboli baland yigit.",
-    "mohigul": "Mohigul — oydek go'zal va gul kabi nafis qiz.",
-    "fayzulloh": "Fayzulloh — Allohning marhamati, uyi fayzli farzand.",
-    "mohinur": "Mohinur — oyning nuri kabi yorug' va chiroyli.",
-    "firdavs": "Firdavs — jannatning eng oliy bog'i kabi go'zal o'g'il.",
-    "mubina": "Mubina — ochiq-oydin, tiniq va pokiza qiz.",
-    "gayrat": "G'ayrat — harakatchan, shijoatli va intiluvchan yigit.",
-    "mukarrama": "Mukarrama — aziz, muqaddas va hurmatga loyiq qiz.",
-    "habibulloh": "Habibulloh — Allohning suyukli do'sti, qadrdoni.",
-    "munisa": "Munisa — eng yaqin do'st, hamdard va mehribon qiz.",
-    "hamid": "Hamid — maqtovga loyiq, yaxshi xulqli yigit.",
-    "mushtariy": "Mushtariy — yulduz kabi yorqin va baland martabali.",
-    "hasan": "Hasan — chiroyli, go'zal va yaxshi amallar egasi.",
-    "muazzam": "Muazzam — ulug'vor, hurmatli va buyuk qiz.",
-    "husan": "Husan — yaxshi, go'zal va mukammal farzand.",
-    "nafisa": "Nafisa — nozik, nafis va juda go'zal qiz.",
-    "ibrohim": "Ibrohim — xalqlarning otasi, ulug' va olijanob inson.",
-    "nargiza": "Nargiza — bahoriy go'zal gul kabi latofatli qiz.",
-    "nasiba": "Nasiba — rizq-ro'zli, baxtli va ulushli qiz.",
-    "ilhom": "Ilhom — ruhlanish, ijodiy ko'tarinkilik egasi.",
-    "nilufar": "Nilufar — suvda ochiladigan go'zal va nafis gul.",
-    "imron": "Imron — yashovchan, obod qiluvchi va hayotsevar.",
-    "nigina": "Nigina — uzuk ko'zi kabi qadrli va chiroyli.",
-    "iskandar": "Iskandar — g'olib, himoyachi va buyuk hukmdor.",
-    "nigora": "Nigora — chiroyli nigohli, go'zal ko'zli qiz.",
-    "islom": "Islom — Allohga bo'ysunuvchi, tinchlik tarafdori.",
-    "nodira": "Nodira — noyob, kamyob va juda qadrli qiz.",
-    "ismoil": "Ismoil — Alloh eshitdi, ijobat bo'lgan orzu.",
-    "nozima": "Nozima — tartibli, odobli va aqlli qiz.",
-    "izzat": "Izzat — hurmat-ehtirom va qadr-qimmat egasi.",
-    "nozli": "Nozli — nozik, erka va latofatli qiz.",
-    "jahongir": "Jahongir — dunyo fath etuvchi, g'olib va jasur.",
-    "oydina": "Oydina — oydin, yorug' va kechasi porlovchi.",
-    "jamshid": "Jamshid — buyuk hukmdor, porloq va nurli yigit.",
-    "oysha": "Oysha — yashovchan, hayotsevar va barakali qiz.",
-    "jasur": "Jasur — botir, mard va qo'rqmas inson.",
-    "parizod": "Parizod — pari kabi go'zal va jozibali qiz.",
-    "javohir": "Javohir — qimmatbaho tosh kabi qadrli va noyob.",
-    "rano": "Rano — go'zal va xushbo'y tog' guli kabi.",
-    "kamron": "Kamron — maqsadiga yetuvchi, omadli va g'olib.",
-    "rayhona": "Rayhona — xushbo'y rayhon guli kabi yoqimli.",
-    "laziz": "Laziz — yoqimli, shirin va aziz farzand.",
-    "robiya": "Robiya — to'rtinchi farzand, bahor nafasi kabi.",
-    "mansur": "Mansur — g'alaba qozonuvchi, doimo ustun keluvchi.",
-    "ruxshona": "Ruxshona — yorqin yuzli, chiroyli va kelajagi yorug'.",
-    "maqsud": "Maqsud — orzu qilingan, kutilgan va niyat qilingan o'g'il.",
-    "sabina": "Sabina — qadimiy qabila nomi, kelbatli va go'zal.",
-    "mirfayz": "Mirfayz — fayzli, ulug' va olijanob yigit.",
-    "sabrina": "Sabrina — sabr-toqatli, chidamli va matonatli qiz.",
-    "murod": "Murod — orzu, niyat va maqsadiga yetishuvchi.",
-    "sadaf": "Sadaf — dengiz chig'anoqlaridagi noyob marvarid kabi.",
-    "muzaffar": "Muzaffar — g'olib, zafar quchuvchi va omadli.",
-    "sajida": "Sajida — Allohga sajda qiluvchi, iymonli qiz.",
-    "muhammad": "Muhammad — maqtovga loyiq, ulug' va yaxshi xulqli.",
-    "salima": "Salima — sog'-salomat, beg'ubor va pokiza qiz.",
-    "navroz": "Navro'z — yangi kun, bahor farzandi.",
-    "sarvinoz": "Sarvinoz — sarv daraxti kabi qaddi-qomati go'zal.",
-    "nodir": "Nodir — noyob, kamyob va juda qadrli yigit.",
-    "sevara": "Sevara — sevimli, hamma yoqtiradigan va sevadigan.",
-    "nozim": "Nozim — tartibli, qonun-qoidaga amal qiluvchi.",
-    "sitora": "Sitora — tungi osmonning yorqin yulduzi kabi.",
-    "shahlo": "Shahlo — katta, qora yoki ko'k ko'zli maftunkor qiz.",
-    "olim": "Olim — bilimli, ilmli va zukko inson.",
-    "shahnoza": "Shahnoza — shohona latofatga ega, erka va go'zal qiz.",
-    "omon": "Omon — sog'-salomat, tinch va xotirjam.",
-    "shaxzoda": "Shaxzoda — shohlar avlodidan bo'lgan oliynasab qiz.",
-    "orif": "Orif — bilimli, ma'rifatli va dono yigit.",
-    "shirin": "Shirin — yoqimli, shirinso'z va mehribon qiz.",
-    "ortiq": "Ortiq — boshqalardan ustun, kelbatli o'g'il.",
-    "shodiya": "Shodiya — shodlik, quvonch va baxt keltiruvchi.",
-    "oybek": "Oybek — oy kabi go'zal va beklar avlodidan bo'lgan.",
-    "umida": "Umida — kelajakdan kutilgan orzu va niyat.",
-    "otabek": "Otabek — otasi kabi ulug' va beklars boshlig'i.",
-    "vasila": "Vasila — yaqinlashtiruvchi, vositachi va suyukli qiz.",
-    "oyatulloh": "Oyatulloh — Allohning mo''jizasi, nuri va hujjati.",
-    "visola": "Visola — diydor ko'rishish, uchrashish baxti.",
-    "ozod": "Ozod — hur, erkin va mustaqil inson.",
-    "xadicha": "Xadicha — kutilgandan oldin tug'ilgan, ulug' ayol nomi.",
-    "ravshan": "Ravshan — yorug', nurli va kelajagi porloq.",
-    "xurshida": "Xurshida — quyosh kabi porloq va nurli qiz.",
-    "ramazan": "Ramazan — qutlug' oy farzandi, muborak o'g'il.",
-    "yulduz": "Yulduz — yorqin, yorug' va osmondagi yulduz kabi.",
-    "rustam": "Rustam — qahramon, pahlavon va juda kuchli yigit.",
-    "zarina": "Zarina — tilla rangli, qimmatbaho va oltindek aziz.",
-    "sardor": "Sardor — yo'lboshchi, yetakchi va guruh sardori.",
-    "zebiniso": "Zebiniso — ayollarning eng go'zali va ziynati.",
-    "sarvar": "Sarvar — rahbar, boshliq va yo'lboshchi.",
-    "zilola": "Zilola — tiniq, pokiza va zilol suv kabi go'zal qiz.",
-    "siroj": "Siroj — chiroq, nur tarqatuvchi va yorug'lik egasi.",
-    "ziyoda": "Ziyoda — boshqalardan ortiq, mukammal va ziyod.",
-    "sobir": "Sobir — chidamli, sabrli va matonatli yigit.",
-    "zohida": "Zohida — taqvodor, Allohga sodiq va pokiza qiz.",
-    "solih": "Solih — yaxshi amallar qiluvchi, taqvodor yigit.",
-    "zulayxo": "Zulayxo — go'zallikda tengsiz va latofatli qiz.",
-    "suhrob": "Suhrob — yaltiroq, qizil rangli la'l kabi qimmatli.",
-    "zuhra": "Zuhra — yorqin yulduz kabi porloq va chiroyli.",
-    "temur": "Temur — temir kabi mustahkam, irodali va kuchli.",
-    "tohir": "Tohir — pok, toza va gunohlardan xoli yigit.",
-    "tolqin": "To'lqin — jo'shqin, harakatchan va faol o'g'il.",
-    "ulugbek": "Ulug'bek — buyuk, ulug' va eng katta bek.",
-    "umid": "Umid — orzu, niyat va kelajakdan kutilgan umid.",
-    "usmon": "Usmon — tanti, mard va jasur inson.",
-    "xurshid": "Xurshid — quyosh kabi porloq va nurli yigit.",
-    "yahyoxon": "Yahyoxon — yashovchi, umri uzoq bo'lgan ulug' inson.",
-    "yodgor": "Yodgor — esdalik, ota-onasidan qolgan aziz farzand.",
-    "yunus": "Yunus — kaptar, tinchlik va totuvlik elchisi.",
-    "yusuf": "Yusuf — husni go'zal, chiroyli va mukammal farzand.",
-    "zafar": "Zafar — g'alaba qozonuvchi, muvaffaqiyat egasi.",
-    "zokir": "Zokir — Allohni zikr qiluvchi, shukr qiluvchi.",
-    "zubayr": "Zubayr — aqlli, kuchli va mard yigit.",
-    "zuhriddin": "Zuhriddin — dinning nuri va yorqin yulduzi.",
-    "abduqodir": "Abduqodir — hamma narsaga qodir bo'lgan Allohning bandasi.",
-    "adiba": "Adiba — odobli, bilimli va ma'rifatli qiz.",
-    "ahror": "Ahror — mehribon, saxovatli va pok qalbli inson.",
-    "afzal": "Afzal — boshqalardan ustun, afzal va qadrli yigit.",
-    "anora": "Anora — anor kabi tiniq, qizil va jozibali qiz.",
-    "asilbek": "Asilbek — toza naslli, aslzoda va olijanob yigit.",
-    "baxtigul": "Baxtigul — baxtli va gul kabi go'zal hayot kechiruvchi qiz.",
-    "bilol": "Bilol — sog'lom, baquvvat va ilk azon aytgan sahoba nomi.",
-    "binafsha": "Binafsha — bahorning ilk xushbo'y guli kabi nafis qiz.",
-    "bobomurod": "Bobomurod — bobosining niyati va orzusi bilan tug'ilgan o'g'il.",
-    "choriyor": "Choriyor — to'rt choriyorga, ya'ni xalifalarga sodiq inson.",
-    "dilorom": "Dilorom — dilga orom beruvchi, tinchlantiruvchi va sevimli qiz.",
-    "dilmurod": "Dilmurod — dilning orzusi, kutilgan niyati bo'lgan farzand.",
-    "dildor": "Dildor — oshiq bo'lgan, doimo sevuvchi va sevimli qiz.",
-    "davron": "Davron — yaxshi davr, baxtli zamon farzandi.",
-    "diyora": "Diyora — vatan, yurt farzandi, ona yurtini sevuvchi qiz.",
-    "eldor": "Eldor — yurtni boshqaruvchi, elga rahbar va yo'lboshchi.",
-    "ezoz": "E'zoz — qadrli, hurmatli va e'zozga loyiq yigit.",
-    "ergash": "Ergash — o'zidan oldingi akalariga ergashib tug'ilgan o'g'il.",
-    "eshmurod": "Eshmurod — orzu qilingan, niyatga erishtiruvchi hamroh.",
-    "fariza": "Fariza — farz, Allohning amri bilan dunyoga kelgan qiz.",
-    "farid": "Farid — noyob, yagona va tengsiz o'g'il bola.",
-    "fazliddin": "Fazliddin — dinning fazilati, ilmi va ulug'vorligi.",
-    "dunyo": "Dunyo — olam, borliq, yer yuzi." ,
-    "behzod": "Behzod — yaxshi fe'l-atvorli, aslzoda va barkamol inson.",
-    "abbos": "Abbos — qovog'i soliq, jiddiy, dovjigar va jasur o'g'il.",
-    "afsona": "Afsona — sehrli hikoya kabi jozibali va sirli qiz.",
-    "abdulaziz": "Abdulaziz — aziz va qudratli bo'lgan Allohning bandasi.",
-    "asal": "Asal — shirin, yoqimli va hamma suyadigan qiz.",
-    "samandar": "Samandar — o't ichida yonmaydigan afsonaviy qush, mustahkam va matonatli."
-}
-
-# --- KLAVIATURALAR ---
 def menyu_klaviaturasi(til):
     return ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text=MATNLAR[til]["btn_ismlar"]), KeyboardButton(text=MATNLAR[til]["btn_tasodif"])],
@@ -442,8 +265,9 @@ def suhbat_klaviaturasi(til):
 
 def til_tanlash_klaviaturasi():
     return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="setlang_uz"),
-        InlineKeyboardButton(text="🇷🇺 Русский", callback_data="setlang_ru")
+        InlineKeyboardButton(text="🇺🇿 O'zbek", callback_data="setlang_uz"),
+        InlineKeyboardButton(text="🇷🇺 Русский", callback_data="setlang_ru"),
+        InlineKeyboardButton(text="🇬🇧 English", callback_data="setlang_en")
     ]])
 
 def aazolik_klaviaturasi(til):
@@ -453,30 +277,20 @@ def aazolik_klaviaturasi(til):
         InlineKeyboardButton(text=MATNLAR[til]["sub_check"], callback_data="check_sub")
     ]])
 
-# --- XENDLERLAR ---
+ISMLAR_MANOSI = {
+    "oybek": "Oybek — go'zal",
+    "behzod": "Behzod — yaxshi",
+    "abbos": "Abbos — jasur"
+}
+
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
     user_id = message.from_user.id
-    args = message.text.split()
-    referrer_id = int(args[1]) if len(args) > 1 and args[1].isdigit() else None
-    if referrer_id == user_id:
-        referrer_id = None
-
-    foydalanuvchi_qosh(user_id, referrer_id)
-
-    if referrer_id:
-        try:
-            ref_til = foydalanuvchi_tilini_ol(referrer_id)
-            await bot.send_message(referrer_id, MATNLAR[ref_til]["ref_bonus"])
-        except:
-            pass
-
+    foydalanuvchi_qosh(user_id)
     til = foydalanuvchi_tilini_ol(user_id)
-
     if not await azo_bolganmi(user_id):
         await message.answer(MATNLAR[til]["sub_text"], reply_markup=aazolik_klaviaturasi(til))
         return
-
     await message.answer(MATNLAR[til]["start"], reply_markup=menyu_klaviaturasi(til))
 
 @dp.callback_query(lambda c: c.data.startswith("setlang_"))
@@ -497,7 +311,6 @@ async def check_subscription(callback: types.CallbackQuery):
     else:
         await callback.answer(MATNLAR[til]["sub_error"], show_alert=True)
 
-# DEKORATOR TO'G'RILANDI
 @dp.message()
 async def bot_messages(message: types.Message):
     user_id = message.from_user.id
@@ -508,34 +321,9 @@ async def bot_messages(message: types.Message):
         await message.answer(MATNLAR[til]["sub_text"], reply_markup=aazolik_klaviaturasi(til))
         return
 
-    raw_text = message.text.strip() if message.text else ""
+    text = message.text.strip() if message.text else ""
 
-    # Matnlarni va tugmalarni avtomatik moslashtiruvchi mukammal mantiq
-    text = raw_text
-    if "Ismlar" in raw_text or "Имена" in raw_text:
-        text = MATNLAR[til]["btn_ismlar"]
-    elif "Tasodif" in raw_text or "Случайное" in raw_text:
-        text = MATNLAR[til]["btn_tasodif"]
-    elif "Hamkor" in raw_text or "Партнерство" in raw_text:
-        text = MATNLAR[til]["btn_hamkor"]
-    elif "Stat" in raw_text or "Статистика" in raw_text:
-        text = MATNLAR[til]["btn_stat"]
-    elif "Profil" in raw_text or "Профиль" in raw_text:
-        text = MATNLAR[til]["btn_profil"]
-    elif "Til" in raw_text or "Язык" in raw_text:
-        text = MATNLAR[til]["btn_til"]
-    elif "Taklif" in raw_text or "Предложение" in raw_text:
-        text = MATNLAR[til]["btn_taklif"]
-    elif "haqida" in raw_text or "боте" in raw_text:
-        text = MATNLAR[til]["btn_ishlash"]
-    elif "Musiqa" in raw_text or "Музыка" in raw_text:
-        text = MATNLAR[til]["btn_musiqa"]
-    elif "Anonim" in raw_text or "Анонимно" in raw_text:
-        text = MATNLAR[til]["btn_chat"]
-    elif "Suhbatni" in raw_text or "Завершить" in raw_text:
-        text = MATNLAR[til]["btn_stop"]
-
-    # 1. AMALDAGI CHATNI TO'XTATISH TUGMASI 
+    # ========== SUHBATNI TO'XTATISH ==========
     if text == MATNLAR[til]["btn_stop"]:
         if status == "chatting" and partner_id:
             partner_til = foydalanuvchi_tilini_ol(partner_id)
@@ -545,140 +333,113 @@ async def bot_messages(message: types.Message):
         await message.answer(MATNLAR[til]["chat_stopped"], reply_markup=menyu_klaviaturasi(til))
         return
 
-    # 2. ANONIM CHAT ALOQA HOLATI
+    # ========== SUHBAT JARAYONIDA ==========
     if status == "chatting" and partner_id:
         try:
             await message.copy_to(chat_id=partner_id)
         except:
-            await message.answer("Suhbatdosh bilan aloqa uzildi.", reply_markup=menyu_klaviaturasi(til))
+            await message.answer("Aloqa uzildi", reply_markup=menyu_klaviaturasi(til))
             holatni_yangila(user_id, "idle", None)
             holatni_yangila(partner_id, "idle", None)
         return
 
-    # 3. INTERAKTIV HOLATLAR (Searching, Suggesting, Music)
-    if status == "searching":
-        await message.answer(MATNLAR[til]["chat_search"])
+    # ========== ISM TAKLIF QILISH TUGMASI ==========
+    if text == MATNLAR[til]["btn_taklif"]:
+        kutish_holati[user_id] = "taklif"
+        await message.answer(MATNLAR[til]["taklif_text"])
         return
 
-    if status == "suggesting":
-        await bot.send_message(ADMIN_ID, f"💡 Yangi ism taklif qilindi:\nUser: {user_id}\nIsm: {raw_text}")
-        holatni_yangila(user_id, "idle", None)
-        await message.answer(MATNLAR[til]["taklif_yuborildi"], reply_markup=menyu_klaviaturasi(til))
+    # ========== MUSIQA QIDIRISH TUGMASI ==========
+    if text == MATNLAR[til]["btn_musiqa"]:
+        await message.answer(MATNLAR[til]["musiqa_text"])
         return
 
-    if status == "music_search":
-        await message.answer("🔍 Qidirilmoqda... Iltimos kuting.")
-        natijalar = await youtube_musiqa_qidir(raw_text)
-        holatni_yangila(user_id, "idle", None)
-        if not natijalar:
-            await message.answer(MATNLAR[til]["musiqa_topilmadi"], reply_markup=menyu_klaviaturasi(til))
+    # ========== AGAR TAKLIF HOLATIDA BO'LSA ==========
+    if user_id in kutish_holati and kutish_holati[user_id] == "taklif":
+        # Holatni tozalaymiz
+        del kutish_holati[user_id]
+        
+        # Faqat shu yerda adminga xabar boradi!
+        try:
+            await bot.send_message(
+                ADMIN_ID,
+                f"🆕 **Yangi ism taklifi**\n\n"
+                f"👤 Kimdan: {message.from_user.full_name}\n"
+                f"🆔 ID: <code>{user_id}</code>\n"
+                f"📝 Taklif: <b>{text}</b>"
+            )
+            await message.answer(MATNLAR[til]["taklif_yuborildi"])
+        except:
+            await message.answer("Xatolik yuz berdi. Qayta urinib ko'ring.")
+        return
+
+    # ========== MUSIQA QIDIRISH ==========
+    if text == MATNLAR[til]["btn_musiqa"]:
+        await message.answer(MATNLAR[til]["musiqa_text"])
+        return
+
+    if text and text not in [MATNLAR[til]["btn_ismlar"], MATNLAR[til]["btn_tasodif"], MATNLAR[til]["btn_hamkor"], 
+                             MATNLAR[til]["btn_stat"], MATNLAR[til]["btn_ishlash"], MATNLAR[til]["btn_profil"], 
+                             MATNLAR[til]["btn_til"], MATNLAR[til]["btn_taklif"], MATNLAR[til]["btn_chat"], 
+                             MATNLAR[til]["btn_stop"], MATNLAR[til]["btn_musiqa"]]:
+        if status != "chatting":
+            natijalar = await youtube_musiqa_qidir(text)
+            if natijalar:
+                javob = "🎵 **Topilgan qo'shiqlar:**\n\n"
+                for i, q in enumerate(natijalar[:3], 1):
+                    javob += f"{i}. {q['nomi'][:40]}\n   🔗 {q['link']}\n\n"
+                await message.answer(javob, disable_web_page_preview=True)
+            else:
+                await message.answer(MATNLAR[til]["musiqa_topilmadi"])
             return
-        javob = "🎵 **Topilgan qo'shiqlar:**\n\n"
-        for i, q in enumerate(natijalar, 1):
-            javob += f"{i}. {q['nomi'][:50]}\n   🔗 {q['link']}\n\n"
-        await message.answer(javob, disable_web_page_preview=True, reply_markup=menyu_klaviaturasi(til))
-        return
 
-    # 4. ASOSIY TUGMALARNI TEKSHIRISH
+    # ========== MENYU TUGMALARI ==========
     if text == MATNLAR[til]["btn_ismlar"]:
-        ismlar = ", ".join([k.capitalize() for k in list(ISMLAR_MANOSI.keys())])
+        ismlar = ", ".join(list(ISMLAR_MANOSI.keys()))
         await message.answer(f"📚 Bazadagi ismlar:\n\n{ismlar}")
-        return
 
     elif text == MATNLAR[til]["btn_tasodif"]:
         tasodifiy_ism = random.choice(list(ISMLAR_MANOSI.keys()))
-        mano = ISMLAR_MANOSI[tasodifiy_ism]
-        await message.answer(f"🎲 Ism:\n\n📌 <b>{tasodifiy_ism.capitalize()}</b> — {mano}")
-        return
+        await message.answer(f"🎲 Tasodifiy ism: {tasodifiy_ism.capitalize()}")
 
     elif text == MATNLAR[til]["btn_hamkor"]:
         bot_info = await bot.get_me()
         ref_link = f"https://t.me/{bot_info.username}?start={user_id}"
-        balans = foydalanuvchi_balansi(user_id)
-        await message.answer(f"💰 Balans: {balans} so'm\n🔗 Link: <code>{ref_link}</code>")
-        return
+        await message.answer(f"💰 Balans: {foydalanuvchi_balansi(user_id)} so'm\n🔗 Link: <code>{ref_link}</code>")
 
     elif text == MATNLAR[til]["btn_stat"]:
-        soni = foydalanuvchilar_soni()
-        await message.answer(MATNLAR[til]["stat_text"].format(soni=soni))
-        return
+        await message.answer(MATNLAR[til]["stat_text"].format(soni=foydalanuvchilar_soni()))
 
     elif text == MATNLAR[til]["btn_ishlash"]:
-        await message.answer(MATNLAR[til]["work_text"])
-        return
+        await message.answer("Ismlar ma'nosini bilish yoki musiqa qidirish mumkin")
 
     elif text == MATNLAR[til]["btn_profil"]:
-        balans = foydalanuvchi_balansi(user_id)
-        await message.answer(MATNLAR[til]["profile_text"].format(user_id=user_id, balans=balans))
-        return
+        await message.answer(MATNLAR[til]["profile_text"].format(user_id=user_id, balans=foydalanuvchi_balansi(user_id)))
 
     elif text == MATNLAR[til]["btn_til"]:
         await message.answer(MATNLAR[til]["change_lang"], reply_markup=til_tanlash_klaviaturasi())
-        return
-
-    elif text == MATNLAR[til]["btn_taklif"]:
-        holatni_yangila(user_id, "suggesting", None)
-        await message.answer(MATNLAR[til]["taklif_text"])
-        return
-
-    elif text == MATNLAR[til]["btn_musiqa"]:
-        holatni_yangila(user_id, "music_search", None)
-        await message.answer(MATNLAR[til]["musiqa_text"])
-        return
 
     elif text == MATNLAR[til]["btn_chat"]:
         s_id = suhbatdosh_top(user_id)
         if s_id:
             holatni_yangila(user_id, "chatting", s_id)
             holatni_yangila(s_id, "chatting", user_id)
-            s_til = foydalanuvchi_tilini_ol(s_id)
             await message.answer(MATNLAR[til]["chat_found"], reply_markup=suhbat_klaviaturasi(til))
-            await bot.send_message(s_id, MATNLAR[s_til]["chat_found"], reply_markup=suhbat_klaviaturasi(s_til))
+            await bot.send_message(s_id, MATNLAR[foydalanuvchi_tilini_ol(s_id)]["chat_found"], reply_markup=suhbat_klaviaturasi(foydalanuvchi_tilini_ol(s_id)))
         else:
             holatni_yangila(user_id, "searching", None)
             await message.answer(MATNLAR[til]["chat_search"], reply_markup=suhbat_klaviaturasi(til))
-        return
 
-    # 5. ENG OXIRIDA — IXTIYORIY MATNLAR
-    elif raw_text and not raw_text.startswith('/'):
-        nom = raw_text.lower()
-        if nom in ISMLAR_MANOSI:
-            mano = ISMLAR_MANOSI[nom]
-            await message.answer(f"📌 <b>{raw_text.capitalize()}</b> — {mano}")
+    elif text:
+        ism_clean = text.lower().replace("'", "").replace("`", "")
+        if ism_clean in ISMLAR_MANOSI:
+            await message.answer(f"📌 <b>{text.capitalize()}</b>\n\n{ISMLAR_MANOSI[ism_clean]}")
         else:
             await message.answer(MATNLAR[til]["not_found"])
-        
-        try:
-            rasm_fayl = rasm_yasa(raw_text)
-            # PHOTO ELEMENTIDAGI MINUS TENGGA (=) ALMASHTIRILDI
-            await message.answer_photo(photo=types.BufferedInputFile(rasm_fayl.read(), filename="ism.png"))
-        except Exception as e:
-            print(f"Rasm yaratishda xato: {e}")
-
-
-    # --- BOTNI ISHGA TUSHIRISH --
-
-
-
-
-from aiohttp import web
-import os
-import asyncio
-
-# Render portni qidirganda unga "Bot ishlayapti!" deb javob beradigan qism
-async def handle(request):
-    return web.Response(text="Bot ishlayapti!")
-
 
 async def main():
-    print("Bot muvaffaqiyatli ishga tushdi...")
-    
-    # Render tekin tarifda talab qiladigan port sozlamalari
-    app = web.Application()
-    app.router.add_get('/', handle)
-    port = int(os.environ.get("PORT", 10000))
-    
-   
+    print(" Bot ishga tushdi!")
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
