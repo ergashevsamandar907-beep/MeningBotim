@@ -280,7 +280,7 @@ def aazolik_klaviaturasi(til):
 ISMLAR_MANOSI = {
     "oybek": "Oybek — go'zal",
     "behzod": "Behzod — yaxshi",
-    "abbos": "Abbos — jasur"
+    "abbos": "Abbos — ooooojasur"
 }
 
 @dp.message(Command("start"))
