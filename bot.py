@@ -145,43 +145,106 @@ baza_yarat()
 
 MATNLAR = {
     "uz": {
-        "start": "Assalomu alaykum!", "btn_ismlar": "🔍 Ismlar", "btn_tasodif": "🎲 Tasodifiy",
-        "btn_hamkor": "🤝 Hamkorlik", "btn_stat": "📊 Statistika", "btn_ishlash": "🧠 Bot qanday ishlaydi",
-        "btn_profil": "👤 Profilim", "btn_til": "🌐 Til", "btn_taklif": "✍️ Taklif",
-        "btn_chat": "💬 Suhbat", "btn_stop": "❌ To\'xtat", "btn_musiqa": "🎵 Musiqa",
-        "sub_text": "Kanalga a\'zo bo\'ling:", "sub_btn": "A\'zo bo\'lish", "sub_check": "Tekshirish",
-        "sub_error": "A\'zo emassiz!", "sub_success": "Rahmat!", "ref_bonus": f"🎉 {REFERRAL_BONUS} so\'m!",
-        "stat_text": "📊 {soni} ta", "work_text": "Ism yozing", "profile_text": "ID: {user_id}\nBalans: {balans}",
-        "not_found": "Topilmadi", "change_lang": "Til tanlang", "lang_changed": "O\'zgartirildi",
-        "taklif_text": "Ism yozing", "taklif_yuborildi": "Yuborildi", "chat_search": "Qidirilmoqda...",
-        "chat_found": "Topildi!", "chat_stopped": "To\'xtatildi", "chat_partner_stopped": "To\'xtatdi",
-        "musiqa_text": "Qo\'shiq nomini yozing:", "musiqa_topilmadi": "Topilmadi"
+        "start": "Assalomu alaykum! Botga xush kelibsiz!",
+        "btn_ismlar": "🔍 Ismlar",
+        "btn_tasodif": "🎲 Tasodifiy",
+        "btn_hamkor": "🤝 Hamkorlik",
+        "btn_stat": "📊 Statistika",
+        "btn_ishlash": "🧠 Bot haqida",
+        "btn_profil": "👤 Profil",
+        "btn_til": "🌐 Til",
+        "btn_taklif": "✍️ Taklif",
+        "btn_chat": "💬 Suhbat",
+        "btn_stop": "❌ To'xtat",
+        "btn_musiqa": "🎵 Musiqa",
+        "sub_text": "Kanalga a'zo bo'ling!",
+        "sub_btn": "A'zo bo'lish",
+        "sub_check": "Tekshirish",
+        "sub_error": "A'zo emassiz!",
+        "sub_success": "Rahmat!",
+        "ref_bonus": f"🎉 +{REFERRAL_BONUS} so'm!",
+        "stat_text": "📊 {soni} ta",
+        "work_text": "Ism yozing",
+        "profile_text": "ID: {user_id}\nBalans: {balans}",
+        "not_found": "Topilmadi",
+        "change_lang": "Til tanlang",
+        "lang_changed": "O'zgartirildi",
+        "taklif_text": "Ism yozing",
+        "taklif_yuborildi": "Yuborildi",
+        "chat_search": "Qidirilmoqda...",
+        "chat_found": "Topildi!",
+        "chat_stopped": "To'xtatildi",
+        "chat_partner_stopped": "To'xtatdi",
+        "musiqa_text": "Qo'shiq nomi:",
+        "musiqa_topilmadi": "Topilmadi"
     },
     "ru": {
-        "start": "Здравствуйте!", "btn_ismlar": "🔍 Имена", "btn_tasodif": "🎲 Случайное",
-        "btn_hamkor": "🤝 Партнеры", "btn_stat": "📊 Статистика", "btn_ishlash": "🧠 Как работает",
-        "btn_profil": "👤 Профиль", "btn_til": "🌐 Язык", "btn_taklif": "✍️ Предложить",
-        "btn_chat": "💬 Чат", "btn_stop": "❌ Стоп", "btn_musiqa": "🎵 Музыка",
-        "sub_text": "Подпишитесь:", "sub_btn": "Подписаться", "sub_check": "Проверить",
-        "sub_error": "Не подписан!", "sub_success": "Спасибо!", "ref_bonus": f"🎉 {REFERRAL_BONUS} сум!",
-        "stat_text": "📊 {soni}", "work_text": "Напишите имя", "profile_text": "ID: {user_id}\nБаланс: {balans}",
-        "not_found": "Не найдено", "change_lang": "Выберите язык", "lang_changed": "Изменено",
-        "taklif_text": "Напишите имя", "taklif_yuborildi": "Отправлено", "chat_search": "Поиск...",
-        "chat_found": "Найден!", "chat_stopped": "Остановлен", "chat_partner_stopped": "Остановил",
-        "musiqa_text": "Напишите название песни:", "musiqa_topilmadi": "Не найдено"
+        "start": "Здравствуйте! Добро пожаловать!",
+        "btn_ismlar": "🔍 Имена",
+        "btn_tasodif": "🎲 Случайное",
+        "btn_hamkor": "🤝 Партнеры",
+        "btn_stat": "📊 Статистика",
+        "btn_ishlash": "🧠 О боте",
+        "btn_profil": "👤 Профиль",
+        "btn_til": "🌐 Язык",
+        "btn_taklif": "✍️ Предложить",
+        "btn_chat": "💬 Чат",
+        "btn_stop": "❌ Стоп",
+        "btn_musiqa": "🎵 Музыка",
+        "sub_text": "Подпишитесь!",
+        "sub_btn": "Подписаться",
+        "sub_check": "Проверить",
+        "sub_error": "Не подписан!",
+        "sub_success": "Спасибо!",
+        "ref_bonus": f"🎉 +{REFERRAL_BONUS} сум!",
+        "stat_text": "📊 {soni}",
+        "work_text": "Напишите имя",
+        "profile_text": "ID: {user_id}\nБаланс: {balans}",
+        "not_found": "Не найдено",
+        "change_lang": "Выберите язык",
+        "lang_changed": "Изменено",
+        "taklif_text": "Напишите имя",
+        "taklif_yuborildi": "Отправлено",
+        "chat_search": "Поиск...",
+        "chat_found": "Найден!",
+        "chat_stopped": "Остановлен",
+        "chat_partner_stopped": "Остановил",
+        "musiqa_text": "Название песни:",
+        "musiqa_topilmadi": "Не найдено"
     },
     "en": {
-        "start": "Hello!", "btn_ismlar": "🔍 Names", "btn_tasodif": "🎲 Random",
-        "btn_hamkor": "🤝 Referral", "btn_stat": "📊 Stats", "btn_ishlash": "🧠 How it works",
-        "btn_profil": "👤 Profile", "btn_til": "🌐 Language", "btn_taklif": "✍️ Suggest",
-        "btn_chat": "💬 Chat", "btn_stop": "❌ Stop", "btn_musiqa": "🎵 Music",
-        "sub_text": "Subscribe:", "sub_btn": "Subscribe", "sub_check": "Check",
-        "sub_error": "Not subscribed!", "sub_success": "Thanks!", "ref_bonus": f"🎉 {REFERRAL_BONUS} sum!",
-        "stat_text": "📊 {soni}", "work_text": "Send name", "profile_text": "ID: {user_id}\nBalance: {balans}",
-        "not_found": "Not found", "change_lang": "Choose language", "lang_changed": "Changed",
-        "taklif_text": "Send name", "taklif_yuborildi": "Sent", "chat_search": "Searching...",
-        "chat_found": "Found!", "chat_stopped": "Stopped", "chat_partner_stopped": "Stopped",
-        "musiqa_text": "Enter song name:", "musiqa_topilmadi": "Not found"
+        "start": "Hello! Welcome!",
+        "btn_ismlar": "🔍 Names",
+        "btn_tasodif": "🎲 Random",
+        "btn_hamkor": "🤝 Referral",
+        "btn_stat": "📊 Stats",
+        "btn_ishlash": "🧠 About",
+        "btn_profil": "👤 Profile",
+        "btn_til": "🌐 Language",
+        "btn_taklif": "✍️ Suggest",
+        "btn_chat": "💬 Chat",
+        "btn_stop": "❌ Stop",
+        "btn_musiqa": "🎵 Music",
+        "sub_text": "Subscribe!",
+        "sub_btn": "Subscribe",
+        "sub_check": "Check",
+        "sub_error": "Not subscribed!",
+        "sub_success": "Thanks!",
+        "ref_bonus": f"🎉 +{REFERRAL_BONUS} sum!",
+        "stat_text": "📊 {soni}",
+        "work_text": "Send name",
+        "profile_text": "ID: {user_id}\nBalance: {balans}",
+        "not_found": "Not found",
+        "change_lang": "Choose language",
+        "lang_changed": "Changed",
+        "taklif_text": "Send name",
+        "taklif_yuborildi": "Sent",
+        "chat_search": "Searching...",
+        "chat_found": "Found!",
+        "chat_stopped": "Stopped",
+        "chat_partner_stopped": "Stopped",
+        "musiqa_text": "Song name:",
+        "musiqa_topilmadi": "Not found"
     }
 }
 
@@ -199,7 +262,7 @@ def suhbat_klaviaturasi(til):
 
 def til_tanlash_klaviaturasi():
     return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="🇺🇿 O'zbekcha", callback_data="setlang_uz"),
+        InlineKeyboardButton(text="🇺🇿 O'zbek", callback_data="setlang_uz"),
         InlineKeyboardButton(text="🇷🇺 Русский", callback_data="setlang_ru"),
         InlineKeyboardButton(text="🇬🇧 English", callback_data="setlang_en")
     ]])
@@ -211,7 +274,11 @@ def aazolik_klaviaturasi(til):
         InlineKeyboardButton(text=MATNLAR[til]["sub_check"], callback_data="check_sub")
     ]])
 
-ISMLAR_MANOSI = {"oybek": "Oybek — go'zal", "behzod": "Behzod — yaxshi", "abbos": "Abbos — jasur"}
+ISMLAR_MANOSI = {
+    "oybek": "Oybek — go'zal",
+    "behzod": "Behzod — yaxshi",
+    "abbos": "Abbos — jasur"
+}
 
 @dp.message(Command("start"))
 async def start_command(message: types.Message):
@@ -246,48 +313,46 @@ async def bot_messages(message: types.Message):
     user_id = message.from_user.id
     til = foydalanuvchi_tilini_ol(user_id)
     status, partner_id = foydalanuvchi_holatini_ol(user_id)
-    
+
     if not await azo_bolganmi(user_id):
         await message.answer(MATNLAR[til]["sub_text"], reply_markup=aazolik_klaviaturasi(til))
         return
-    
+
     text = message.text.strip() if message.text else ""
-    
+
     if text == MATNLAR[til]["btn_stop"]:
         if status == "chatting" and partner_id:
-            partner_til = foydalanuvchi_tilini_ol(partner_id)
-            await bot.send_message(partner_id, MATNLAR[partner_til]["chat_partner_stopped"], reply_markup=menyu_klaviaturasi(partner_til))
+            await bot.send_message(partner_id, MATNLAR[foydalanuvchi_tilini_ol(partner_id)]["chat_partner_stopped"], reply_markup=menyu_klaviaturasi(foydalanuvchi_tilini_ol(partner_id)))
             holatni_yangila(partner_id, "idle", None)
         holatni_yangila(user_id, "idle", None)
         await message.answer(MATNLAR[til]["chat_stopped"], reply_markup=menyu_klaviaturasi(til))
         return
-    
+
     if status == "chatting" and partner_id:
         try:
             await message.copy_to(chat_id=partner_id)
         except:
-            await message.answer("Aloqa uzildi", reply_markup=menyu_klaviaturasi(til))
+            await message.answer("Aloqa uzildi")
             holatni_yangila(user_id, "idle", None)
             holatni_yangila(partner_id, "idle", None)
         return
-    
+
     if text == MATNLAR[til]["btn_musiqa"]:
         await message.answer(MATNLAR[til]["musiqa_text"])
         return
-    
-    if text and text not in [MATNLAR[til][f"btn_{i}"] for i in ["ismlar", "tasodif", "hamkor", "stat", "ishlash", "profil", "til", "taklif", "chat", "stop", "musiqa"]]:
-        if status != "chatting" and not text.startswith('/'):
-            await message.answer("🔍 Qidirilmoqda...")
+
+    if text and text not in [MATNLAR[til]["btn_ismlar"], MATNLAR[til]["btn_tasodif"], MATNLAR[til]["btn_hamkor"], MATNLAR[til]["btn_stat"], MATNLAR[til]["btn_ishlash"], MATNLAR[til]["btn_profil"], MATNLAR[til]["btn_til"], MATNLAR[til]["btn_taklif"], MATNLAR[til]["btn_chat"], MATNLAR[til]["btn_stop"], MATNLAR[til]["btn_musiqa"]]:
+        if status != "chatting":
             natijalar = await youtube_musiqa_qidir(text)
-            if not natijalar:
+            if natijalar:
+                javob = "🎵 Topilganlar:\n\n"
+                for i, q in enumerate(natijalar[:3], 1):
+                    javob += f"{i}. {q['nomi'][:40]}\n   {q['link']}\n\n"
+                await message.answer(javob, disable_web_page_preview=True)
+            else:
                 await message.answer(MATNLAR[til]["musiqa_topilmadi"])
-                return
-            javob = "🎵 Topilgan qo'shiqlar:\n\n"
-            for i, q in enumerate(natijalar, 1):
-                javob += f"{i}. {q['nomi'][:50]}\n   {q['link']}\n\n"
-            await message.answer(javob, disable_web_page_preview=True)
             return
-    
+
     if text == MATNLAR[til]["btn_ismlar"]:
         await message.answer("Ismlar: oybek, behzod, abbos")
     elif text == MATNLAR[til]["btn_tasodif"]:
@@ -297,21 +362,29 @@ async def bot_messages(message: types.Message):
     elif text == MATNLAR[til]["btn_stat"]:
         await message.answer(MATNLAR[til]["stat_text"].format(soni=foydalanuvchilar_soni()))
     elif text == MATNLAR[til]["btn_ishlash"]:
-        await message.answer(MATNLAR[til]["work_text"])
+        await message.answer("Ism yuboring, men ma'nosini aytaman yoki musiqa topaman")
     elif text == MATNLAR[til]["btn_profil"]:
         await message.answer(MATNLAR[til]["profile_text"].format(user_id=user_id, balans=foydalanuvchi_balansi(user_id)))
     elif text == MATNLAR[til]["btn_til"]:
-        await message.answer(MATNLAR[til]["change_lang"], reply_markup=til_tanlash_klaviaturasi())
+        await message.answer("Til tanlang:", reply_markup=til_tanlash_klaviaturasi())
+    elif text == MATNLAR[til]["btn_taklif"]:
+        await message.answer("Ism taklif qiling")
     elif text == MATNLAR[til]["btn_chat"]:
         s_id = suhbatdosh_top(user_id)
         if s_id:
             holatni_yangila(user_id, "chatting", s_id)
             holatni_yangila(s_id, "chatting", user_id)
-            await message.answer(MATNLAR[til]["chat_found"], reply_markup=suhbat_klaviaturasi(til))
-            await bot.send_message(s_id, MATNLAR[foydalanuvchi_tilini_ol(s_id)]["chat_found"], reply_markup=suhbat_klaviaturasi(foydalanuvchi_tilini_ol(s_id)))
+            await message.answer("Suhbatdosh topildi!", reply_markup=suhbat_klaviaturasi(til))
+            await bot.send_message(s_id, "Suhbatdosh topildi!", reply_markup=suhbat_klaviaturasi(foydalanuvchi_tilini_ol(s_id)))
         else:
             holatni_yangila(user_id, "searching", None)
-            await message.answer(MATNLAR[til]["chat_search"], reply_markup=suhbat_klaviaturasi(til))
+            await message.answer("Qidirilmoqda...", reply_markup=suhbat_klaviaturasi(til))
+    elif text:
+        ism_clean = text.lower().replace("'", "").replace("`", "")
+        if ism_clean in ISMLAR_MANOSI:
+            await message.answer(f"📌 {text.capitalize()} - {ISMLAR_MANOSI[ism_clean]}")
+        else:
+            await message.answer("Bunday ism topilmadi")
 
 async def main():
     print("Bot ishga tushdi!")
