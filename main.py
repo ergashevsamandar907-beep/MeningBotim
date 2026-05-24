@@ -656,11 +656,34 @@ async def bot_messages(message: types.Message):
             print(f"Rasm yaratishda xato: {e}")
 
 
-    # --- BOTNI ISHGA TUSHIRISH ---
+    # --- BOTNI ISHGA TUSHIRISH --
+
+
+
+
+from aiohttp import web
+import os
+import asyncio
+
+# Render portni qidirganda unga "Bot ishlayapti!" deb javob beradigan qism
+async def handle(request):
+    return web.Response(text="Bot ishlayapti!")
+
 async def main():
-    # Mana shu yerga o'sha yozuvni qo'yamiz:
     print("Bot muvaffaqiyatli ishga tushdi...")
     
+    # Render tekin tarifda talab qiladigan port sozlamalari
+    app = web.Application()
+    app.router.add_get('/', handle)
+    port = int(os.environ.get("PORT", 10000))
+    
+    # Veb-serverni orqa fonda (background) ishga tushiramiz
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    
+    # Telegram botni xabarlarni kutish rejimida yoqamiz
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
