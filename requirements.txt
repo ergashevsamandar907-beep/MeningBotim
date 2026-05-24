@@ -1,4 +1,0 @@
-aiogram==3.13.1
-pillow>=11.1.0
-python-dotenv==1.0.0
-yt-dlp
